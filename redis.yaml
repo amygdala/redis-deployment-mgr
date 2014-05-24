@@ -1,0 +1,129 @@
+
+name: redis
+
+modules:
+  redis_master:
+    type: REPLICA_POOL
+    replicaPoolModule:
+      numReplicas: 1
+      replicaPoolParams:
+        v1beta1:
+          machineType: n1-standard-1
+          onHostMaintenance: TERMINATE
+          zone: us-central1-a
+          baseInstanceName: redismaster
+          disksToCreate:
+            - boot: true
+              initializeParams:
+                sourceImage: https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/debian-7-wheezy-v20131120
+                diskSizeGb: 100
+          initAction: redis_init
+          networkInterfaces:
+            - network: default
+              accessConfigs:
+                - name: External NAT
+                  type: ONE_TO_ONE_NAT
+          serviceAccounts:
+            - email: default
+              scopes: [
+                 # Allow self-deprovisioning
+                 "https://www.googleapis.com/auth/compute",
+                 # Allow CloudManager deployment
+                 "https://www.googleapis.com/auth/ndev.cloudman",
+                 # Allow self-identification
+                 "https://www.googleapis.com/auth/userinfo.email",
+                 # Allow source code reading
+                 # "https://www.googleapis.com/auth/projecthosting"
+              ]
+      envVariables:
+        IS_MASTER:
+          value: true
+        UTIL_INSTALL_DIR:
+          value: "/tmp"
+        VIEW_NAME:
+          value: "$.modules.redis_slave.replicaPoolModule.resourceView"
+        MEMBER_COUNT:
+          value: "$.modules.redis_slave.replicaPoolModule.numReplicas"
+        ZONE:
+          value: "$.modules.redis_master.replicaPoolModule.replicaPoolParams.v1beta1.zone"
+  redis_slave:
+    type: REPLICA_POOL
+    replicaPoolModule:
+      numReplicas: 2
+      replicaPoolParams:
+        v1beta1:
+          machineType: n1-standard-1
+          onHostMaintenance: TERMINATE
+          zone: us-central1-a
+          baseInstanceName: redis
+          disksToCreate:
+            - boot: true
+              initializeParams:
+                sourceImage: https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/debian-7-wheezy-v20131120
+                diskSizeGb: 100
+          initAction: redis_init_slave
+          networkInterfaces:
+            - network: default
+              accessConfigs:
+                - name: External NAT
+                  type: ONE_TO_ONE_NAT
+          serviceAccounts:
+            - email: default
+              scopes: [
+                 # Allow GAE deployment
+                 # "https://www.googleapis.com/auth/appengine.admin",
+                 # Allow self-deprovisioning
+                 "https://www.googleapis.com/auth/compute",
+                 # Ideally devstorage.full_control would be a superset of
+                 # devstorage.read_write but AppEngine deployments seem to have issues
+                 # with devstorage.full_control but not devstorage.read_write. In the
+                 # mean time we include both.
+                 # Allow reading object ACL
+                 # "https://www.googleapis.com/auth/devstorage.full_control",
+                 # Allow uploading build artifacts
+                 # "https://www.googleapis.com/auth/devstorage.read_write",
+                 # Allow CloudManager deployment
+                 "https://www.googleapis.com/auth/ndev.cloudman",
+                 # Allow self-identification
+                 "https://www.googleapis.com/auth/userinfo.email",
+                 # Allow source code reading
+                 # "https://www.googleapis.com/auth/projecthosting"
+              ]
+      envVariables:
+        IS_MASTER:
+          value: false
+        UTIL_INSTALL_DIR:
+          value: "/tmp"
+        VIEW_NAME:
+          value: "$.modules.redis_master.replicaPoolModule.resourceView"
+        MEMBER_COUNT:
+          value: "$.modules.redis_master.replicaPoolModule.numReplicas"
+        ZONE:
+          value: "$.modules.redis_slave.replicaPoolModule.replicaPoolParams.v1beta1.zone"
+
+actions:
+  redis_init:
+    commands: [
+      "apt-get update",
+      "apt-get -y -qq install gcc",
+      "apt-get -y -qq install make",
+      "%file:redis.sh",
+      "%file:install-getinstancename.sh",
+      "%file:install-gcloud.sh",
+      "%file:install-wait-for-view.sh",
+      "$UTIL_INSTALL_DIR/wait-for-view.sh",
+      "%file:setup_master.sh"
+    ]
+  redis_init_slave:
+    commands: [
+      "apt-get update",
+      "apt-get -y -qq install gcc",
+      "apt-get -y -qq install make",
+      "%file:redis.sh",
+      "%file:install-getinstancename.sh",
+      "%file:install-gcloud.sh",
+      "%file:install-wait-for-view.sh",
+      "$UTIL_INSTALL_DIR/wait-for-view.sh",
+      "%file:setup_slave.sh"
+    ]
+
