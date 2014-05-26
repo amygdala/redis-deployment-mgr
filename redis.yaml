@@ -37,7 +37,9 @@ modules:
               ]
       envVariables:
         IS_MASTER:
-          value: true
+          value: "true"
+        REDIS_AUTH:
+          value: "xxxxxx"
         UTIL_INSTALL_DIR:
           value: "/tmp"
         VIEW_NAME:
@@ -91,7 +93,7 @@ modules:
               ]
       envVariables:
         IS_MASTER:
-          value: false
+          value: "false"
         UTIL_INSTALL_DIR:
           value: "/tmp"
         VIEW_NAME:
@@ -107,6 +109,8 @@ actions:
       "apt-get update",
       "apt-get -y -qq install gcc",
       "apt-get -y -qq install make",
+      "apt-get -y -qq install emacs",
+      "apt-get -y -qq install less",
       "%file:redis.sh",
       "%file:install-getinstancename.sh",
       "%file:install-gcloud.sh",
@@ -119,6 +123,8 @@ actions:
       "apt-get update",
       "apt-get -y -qq install gcc",
       "apt-get -y -qq install make",
+      "apt-get -y -qq install emacs",
+      "apt-get -y -qq install less",
       "%file:redis.sh",
       "%file:install-getinstancename.sh",
       "%file:install-gcloud.sh",

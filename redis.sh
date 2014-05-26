@@ -9,8 +9,13 @@ curl "http://metadata.google.internal/computeMetadata/v1/instance/network-interf
 cp redis.conf redis.conf.orig;
 perl -pi -e "s/logfile\s+stdout/logfile \/var\/log\/redis.log/" redis.conf;
 perl -pi -e "s/daemonize\s+no/daemonize yes/" redis.conf;
-perl -pi -e "s/#\s+(bind\s*)[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/\$1 `cat /tmp/addr`/" redis.conf;
+perl -pi -e "s/#\s+(bind\s*)[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+/\$1 `cat /tmp/addr` 127.0.0.1/" redis.conf;
 perl -pi -e "s/pidfile\s+\/var\/run\/redis.pid/pidfile \/var\/run\/redis_6379.pid/" redis.conf;
+
+if [$IS_MASTER == "true"]; then
+	echo requirepass "mul2yY5Pgg" >> redis.conf
+fi
+
 
 # if [ ! "${REDIS_MASTER}x" == "x" ]; then
 #   echo slaveof $REDIS_MASTER 6379 >> redis.conf
@@ -23,7 +28,7 @@ cp utils/redis_init_script /etc/init.d/redis_6379
 
 update-rc.d redis_6379 defaults
 
-/etc/init.d/redis_6379 start
+# /etc/init.d/redis_6379 start
 
 touch /etc/redis/26379.conf
 cat <<EOF >> /etc/redis/26379.conf
@@ -44,4 +49,4 @@ perl -pi -e 's/REDISPORT=6379/REDISPORT=26379/' /etc/init.d/redis_26379
 perl -pi -e 's/\$CLIEXEC -p \$REDISPORT shutdown/kill -2 \$PID; rm -rf \$PIDFILE/' /etc/init.d/redis_26379
 update-rc.d redis_26379 defaults
 
-/etc/init.d/redis_26379 start
+# /etc/init.d/redis_26379 start
