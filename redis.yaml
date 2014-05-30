@@ -20,9 +20,11 @@ modules:
           initAction: redis_init
           networkInterfaces:
             - network: default
+              # static ip is for walkshare-devel
               accessConfigs:
                 - name: External NAT
                   type: ONE_TO_ONE_NAT
+                  natIp: 23.251.149.49
           serviceAccounts:
             - email: default
               scopes: [
@@ -51,7 +53,7 @@ modules:
   redis_slave:
     type: REPLICA_POOL
     replicaPoolModule:
-      numReplicas: 2
+      numReplicas: 4
       replicaPoolParams:
         v1beta1:
           machineType: n1-standard-1
@@ -94,6 +96,8 @@ modules:
       envVariables:
         IS_MASTER:
           value: "false"
+        REDIS_AUTH:
+          value: "xxxxxx"
         UTIL_INSTALL_DIR:
           value: "/tmp"
         VIEW_NAME:
